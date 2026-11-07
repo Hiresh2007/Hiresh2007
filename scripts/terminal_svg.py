@@ -2,6 +2,10 @@
 
 Commands type out character by character (SMIL, so it animates inside a
 GitHub README <img>), output lines fade in, and the cursor keeps blinking.
+
+Every element's *static* state is the finished terminal; all animations start
+at t=0 and hold the element hidden until its turn. A viewer that does not run
+SMIL therefore still sees the complete session instead of an empty window.
 Edit SESSION below and re-run:  python scripts/terminal_svg.py
 """
 
@@ -72,7 +76,7 @@ def prompt(y: float, begin: float) -> str:
         f'<tspan fill="{C["blue"]}">]</tspan>'
     )
     return (
-        f'<g opacity="0">{fade(begin, 0.15)}'
+        f'<g>{fade(begin, 0.15)}'
         f'<text x="{PAD_X}" y="{y}">{top}</text>'
         f'<text x="{PAD_X}" y="{y + LINE_H}" fill="{C["blue"]}">└─<tspan fill="{C["red"]}">$</tspan></text>'
         "</g>"
@@ -80,9 +84,11 @@ def prompt(y: float, begin: float) -> str:
 
 
 def fade(begin: float, dur: float = 0.3) -> str:
+    """Hidden from t=0 until `begin`, then fade in over `dur`; visible if SMIL is off."""
+    total = begin + dur
     return (
-        f'<animate attributeName="opacity" from="0" to="1" begin="{begin:.2f}s" '
-        f'dur="{dur}s" fill="freeze"/>'
+        f'<animate attributeName="opacity" values="0;0;1" keyTimes="0;{begin / total:.4f};1" '
+        f'begin="0s" dur="{total:.2f}s" fill="freeze"/>'
     )
 
 
@@ -93,10 +99,15 @@ def typed(text: str, x: float, y: float, begin: float, idx: int) -> tuple[str, f
     dur = max(n * TYPE_SPEED, 0.1)
     steps = ";".join(f"{i * CHAR_W:.1f}" for i in range(n + 1))
     times = ";".join(f"{i / n:.4f}" for i in range(n + 1))
+    # clip width: 0 from t=0 until `begin`, then one character per step
+    total = begin + dur
+    clip_vals = "0;" + steps
+    clip_times = "0;" + ";".join(f"{(begin + i / n * dur) / total:.4f}" for i in range(n + 1))
     svg = (
-        f'<clipPath id="c{idx}"><rect x="{x}" y="{y - FONT - 2}" width="0" height="{LINE_H}">'
-        f'<animate attributeName="width" values="{steps}" keyTimes="{times}" calcMode="discrete" '
-        f'begin="{begin:.2f}s" dur="{dur:.2f}s" fill="freeze"/></rect></clipPath>'
+        f'<clipPath id="c{idx}"><rect x="{x}" y="{y - FONT - 2}" width="{width + CHAR_W:.1f}" '
+        f'height="{LINE_H}">'
+        f'<animate attributeName="width" values="{clip_vals}" keyTimes="{clip_times}" '
+        f'calcMode="discrete" begin="0s" dur="{total:.2f}s" fill="freeze"/></rect></clipPath>'
         f'<text x="{x}" y="{y}" fill="{C["green"]}" clip-path="url(#c{idx})" '
         f'textLength="{width:.1f}" lengthAdjust="spacingAndGlyphs">{escape(text)}</text>'
         # typing cursor that rides the clip edge, then disappears
@@ -125,7 +136,7 @@ def build() -> str:
         for line in outputs:
             y += LINE_H
             spans = "".join(f'<tspan fill="{C[c]}">{escape(s)}</tspan>' for s, c in line)
-            body.append(f'<text x="{PAD_X}" y="{y}" opacity="0">{fade(t)}{spans}</text>')
+            body.append(f'<text x="{PAD_X}" y="{y}">{fade(t)}{spans}</text>')
             t += 0.12
         t += PAUSE_AFTER_OUT
         y += LINE_H + 6
@@ -133,10 +144,11 @@ def build() -> str:
     body.append(prompt(y, t))
     y += LINE_H
     body.append(
+        f'<g>{fade(t + 0.2, 0.01)}'
         f'<rect x="{cmd_x}" y="{y - FONT + 1}" width="{CHAR_W:.1f}" height="{FONT + 2}" '
-        f'fill="{C["text"]}" opacity="0">'
+        f'fill="{C["text"]}">'
         f'<animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.5;0.6" dur="1.1s" '
-        f'begin="{t + 0.2:.2f}s" repeatCount="indefinite"/></rect>'
+        f'begin="{t + 0.2:.2f}s" repeatCount="indefinite"/></rect></g>'
     )
     height = y + 30
 

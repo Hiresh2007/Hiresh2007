@@ -77,7 +77,7 @@ Findings (2)
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Hiresh2007/Hiresh2007/output/profile-3d-contrib/profile-night-rainbow.svg"/>
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Hiresh2007/Hiresh2007/output/profile-3d-contrib/profile-gitblue.svg"/>
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Hiresh2007/Hiresh2007/output/profile-3d-contrib/profile-season-animate.svg"/>
     <img alt="3D contribution calendar" src="https://raw.githubusercontent.com/Hiresh2007/Hiresh2007/output/profile-3d-contrib/profile-night-rainbow.svg"/>
   </picture>
 </p>

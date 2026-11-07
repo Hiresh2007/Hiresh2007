@@ -25,11 +25,17 @@ jobs:
           outputs: |
             dist/github-snake.svg
             dist/github-snake-dark.svg?palette=github-dark
-      - run: mv profile-3d-contrib dist/
+      # dist/ is created root-owned by the snake container, so assemble a new dir
+      - name: Collect assets
+        run: |
+          mkdir site
+          cp -r dist/. site/
+          cp -r profile-3d-contrib site/
+          ls -R site
       - uses: crazy-max/ghaction-github-pages@v4
         with:
           target_branch: output
-          build_dir: dist
+          build_dir: site
           commit_message: Update profile assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
