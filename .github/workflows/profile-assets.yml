@@ -10,6 +10,11 @@ on:
 permissions:
   contents: write
 
+# Only one run at a time; two runs racing to create the output branch fail.
+concurrency:
+  group: profile-assets
+  cancel-in-progress: false
+
 jobs:
   generate:
     runs-on: ubuntu-latest
